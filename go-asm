@@ -1,15 +1,11 @@
 #!/bin/bash
-# Disassemble a symbol of this package as Go assembly. Jump targets become
-# labels and the source location becomes a comment.
+# Show assembly language for a symbol of this package. Jump targets become
+# labels and the source location becomes a comment. The package is built as a
+# test binary, so tests and benchmarks are included.
 #
 # Usage:
-#   ./go-disassemble <symbol-regexp>
-#
-# The package is built as a test binary, so tests and benchmarks are included.
-# An inlined function keeps no symbol: disassemble a caller and read the
-# file:line column to find it.
-#
-#   ./go-disassemble 'BenchmarkAddrTo6\.func[123]$'
+#   ./go-asm <symbol-regexp>
+#   ./go-asm 'Example'
 
 set -eu
 
