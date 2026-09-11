@@ -23,10 +23,11 @@ func AssertEqual[T any](t *testing.T, got, want T, format string, args ...any) b
 	return false
 }
 
-// MustParseAddr parses s as an Addr and panics on error. The builtin type has
-// no parser, so netip parses the address and the bytes are copied over.
-func MustParseAddr(s string) Addr {
-	parsed := netip.MustParseAddr(s)
+// FromNetipAddr copies a netip.Addr into an Addr.
+func FromNetipAddr(parsed netip.Addr) Addr {
+	if !parsed.IsValid() {
+		return Addr{}
+	}
 	b := parsed.As16()
 	ip := Addr{addr: uint128{
 		binary.BigEndian.Uint64(b[:8]),
@@ -41,6 +42,32 @@ func MustParseAddr(s string) Addr {
 		ip.z = unique.Make(addrDetail{isV6: true, zoneV6: parsed.Zone()})
 	}
 	return ip
+}
+
+// ToNetipAddr copies an Addr back into a netip.Addr.
+func (ip Addr) ToNetipAddr() netip.Addr {
+	if ip.z == (unique.Handle[addrDetail]{}) {
+		return netip.Addr{}
+	}
+	var b [16]byte
+	binary.BigEndian.PutUint64(b[:8], ip.addr.hi)
+	binary.BigEndian.PutUint64(b[8:], ip.addr.lo)
+	if ip.z == z4 {
+		return netip.AddrFrom16(b).Unmap()
+	}
+	return netip.AddrFrom16(b).WithZone(ip.z.Value().zoneV6)
+}
+
+// AddrTo6Builtin wraps the builtin To6 to take and return a netip.Addr, like
+// the other implementations.
+func AddrTo6Builtin(ip netip.Addr) netip.Addr {
+	return FromNetipAddr(ip).To6().ToNetipAddr()
+}
+
+// MustParseAddr parses s as an Addr and panics on error. The builtin type has
+// no parser, so netip parses the address and the bytes are copied over.
+func MustParseAddr(s string) Addr {
+	return FromNetipAddr(netip.MustParseAddr(s))
 }
 
 // TestMustParseAddr checks the bits taken from netip give back the same address.
@@ -77,42 +104,27 @@ func TestAddrTo6(t *testing.T) {
 		{"2a01:db8::1", "2a01:db8::1"},
 		{"fe80::1%eth0", "fe80::1%eth0"},
 	}
-	parsers := map[reflect.Type]func(string) reflect.Value{
-		reflect.TypeFor[netip.Addr](): func(s string) reflect.Value {
-			return reflect.ValueOf(netip.MustParseAddr(s))
-		},
-		reflect.TypeFor[Addr](): func(s string) reflect.Value {
-			return reflect.ValueOf(MustParseAddr(s))
-		},
+	parse := func(s string) netip.Addr {
+		if s == "" {
+			return netip.Addr{}
+		}
+		return netip.MustParseAddr(s)
 	}
-	// Each implementation works on its own address type, so the parser is
-	// looked up from the type the function takes.
 	implementations := []struct {
 		name    string
-		addrTo6 any
+		addrTo6 func(netip.Addr) netip.Addr
 	}{
 		{"safe", AddrTo6Safe},
 		{"unsafe", AddrTo6Unsafe},
-		{"builtin", Addr.To6},
+		{"builtin", AddrTo6Builtin},
 	}
 	for _, implementation := range implementations {
 		t.Run(implementation.name, func(t *testing.T) {
-			addrTo6 := reflect.ValueOf(implementation.addrTo6)
-			addrType := addrTo6.Type().In(0)
-			parse := func(s string) reflect.Value {
-				if s == "" {
-					return reflect.Zero(addrType)
-				}
-				return parsers[addrType](s)
-			}
 			for _, tc := range cases {
 				input, want := parse(tc.input), parse(tc.output)
-				got := addrTo6.Call([]reflect.Value{input})[0]
-				AssertEqual(t, got.Interface(), want.Interface(),
-					"AddrTo6(%s)", input)
-				AssertEqual(t,
-					got.Interface().(fmt.Stringer).String(),
-					want.Interface().(fmt.Stringer).String(),
+				got := implementation.addrTo6(input)
+				AssertEqual(t, got, want, "AddrTo6(%s)", input)
+				AssertEqual(t, got.String(), want.String(),
 					"AddrTo6(%s).String()", input)
 			}
 		})
