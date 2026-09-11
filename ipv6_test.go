@@ -145,3 +145,24 @@ func BenchmarkAddrTo6(b *testing.B) {
 		}
 	})
 }
+
+func ExampleAddrTo6Safe() {
+	input := netip.MustParseAddr("203.0.113.10")
+	output := AddrTo6Safe(input)
+	fmt.Printf("%s → %s\n", input, output)
+	// Output: 203.0.113.10 → ::ffff:203.0.113.10
+}
+
+func ExampleAddrTo6Unsafe() {
+	input := netip.MustParseAddr("203.0.113.10")
+	output := AddrTo6Unsafe(input)
+	fmt.Printf("%s → %s\n", input, output)
+	// Output: 203.0.113.10 → ::ffff:203.0.113.10
+}
+
+func ExampleAddrTo6Builtin() {
+	input := FromNetipAddr(netip.MustParseAddr("203.0.113.10"))
+	output := input.To6()
+	fmt.Printf("%s → %s\n", input, output)
+	// Output: 203.0.113.10 → ::ffff:203.0.113.10
+}
