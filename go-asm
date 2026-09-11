@@ -5,7 +5,7 @@
 #
 # Usage:
 #   ./go-asm <symbol-regexp>
-#   ./go-asm 'Example'
+#   ./go-asm '\.asm'
 
 set -eu
 

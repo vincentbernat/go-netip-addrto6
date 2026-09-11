@@ -166,3 +166,15 @@ func ExampleAddrTo6Builtin() {
 	fmt.Printf("%s → %s\n", input, output)
 	// Output: 203.0.113.10 → ::ffff:203.0.113.10
 }
+
+func asmSafe(ip netip.Addr) netip.Addr {
+	return AddrTo6Safe(ip)
+}
+
+func asmUnsafe(ip netip.Addr) netip.Addr {
+	return AddrTo6Unsafe(ip)
+}
+
+func asmBuiltin(ip Addr) Addr {
+	return ip.To6()
+}
