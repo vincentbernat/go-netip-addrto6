@@ -30,7 +30,6 @@ func AddrTo6Unsafe(ip netip.Addr) netip.Addr {
 	if !ip.Is4() {
 		return ip
 	}
-	p := *(*addrProxy)(unsafe.Pointer(&ip))
-	p.z = netipZ6noz
-	return *(*netip.Addr)(unsafe.Pointer(&p))
+	(*addrProxy)(unsafe.Pointer(&ip)).z = netipZ6noz
+	return ip
 }
