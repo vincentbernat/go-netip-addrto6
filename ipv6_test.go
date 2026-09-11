@@ -44,24 +44,10 @@ func FromNetipAddr(parsed netip.Addr) Addr {
 	return ip
 }
 
-// ToNetipAddr copies an Addr back into a netip.Addr.
-func (ip Addr) ToNetipAddr() netip.Addr {
-	if ip.z == (unique.Handle[addrDetail]{}) {
-		return netip.Addr{}
-	}
-	var b [16]byte
-	binary.BigEndian.PutUint64(b[:8], ip.addr.hi)
-	binary.BigEndian.PutUint64(b[8:], ip.addr.lo)
-	if ip.z == z4 {
-		return netip.AddrFrom16(b).Unmap()
-	}
-	return netip.AddrFrom16(b).WithZone(ip.z.Value().zoneV6)
-}
-
 // AddrTo6Builtin wraps the builtin To6 to take and return a netip.Addr, like
 // the other implementations.
 func AddrTo6Builtin(ip netip.Addr) netip.Addr {
-	return FromNetipAddr(ip).To6().ToNetipAddr()
+	return FromNetipAddr(ip).To6().toNetipAddr()
 }
 
 // MustParseAddr parses s as an Addr and panics on error. The builtin type has

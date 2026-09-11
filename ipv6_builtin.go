@@ -48,17 +48,22 @@ func (ip Addr) To6() Addr {
 	return ip
 }
 
-// String returns the string form of the IP address ip. The real netip formats
-// the address by hand, this version asks netip to do it.
-func (ip Addr) String() string {
+// toNetipAddr copies an Addr back into a netip.Addr.
+func (ip Addr) toNetipAddr() netip.Addr {
 	if ip.z == (unique.Handle[addrDetail]{}) {
-		return "invalid IP"
+		return netip.Addr{}
 	}
 	var b [16]byte
 	binary.BigEndian.PutUint64(b[:8], ip.addr.hi)
 	binary.BigEndian.PutUint64(b[8:], ip.addr.lo)
 	if ip.z == z4 {
-		return netip.AddrFrom16(b).Unmap().String()
+		return netip.AddrFrom16(b).Unmap()
 	}
-	return netip.AddrFrom16(b).WithZone(ip.z.Value().zoneV6).String()
+	return netip.AddrFrom16(b).WithZone(ip.z.Value().zoneV6)
+}
+
+// String returns the string form of the IP address ip. The real netip formats
+// the address by hand, this version asks netip to do it.
+func (ip Addr) String() string {
+	return ip.toNetipAddr().String()
 }
