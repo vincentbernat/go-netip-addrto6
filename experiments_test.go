@@ -65,6 +65,10 @@ func foldingNoAllocUint32Optimized(x uint32) uint32 {
 	return x&0xff000000 | uint32(byte(x>>16))<<16 | uint32(byte(x>>8))<<8 | uint32(byte(x))
 }
 
+func foldingNoAllocUint32Optimized2(x uint32) uint32 {
+	return x&0xff000000 | x&0xff0000 | x&0xff00 | x&0xff
+}
+
 func foldingBEUint16(x uint16) uint16 {
 	var b [2]byte
 	binary.BigEndian.PutUint16(b[:], x)
@@ -141,6 +145,7 @@ func TestFoldingUint32(t *testing.T) {
 		{"native", foldingNativeUint32},
 		{"no alloc", foldingNoAllocUint32},
 		{"no alloc optimized", foldingNoAllocUint32Optimized},
+		{"no alloc tweaked", foldingNoAllocUint32Optimized2},
 	}
 	for _, implementation := range implementations {
 		t.Run(implementation.name, func(t *testing.T) {
