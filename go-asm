@@ -18,7 +18,7 @@ log=$(mktemp)
 trap 'rm -f "$log"' EXIT
 
 # -S asks the compiler for the assembly it produces, on stderr
-if ! go test -c -o /dev/null -gcflags="-S" . >/dev/null 2>"$log"; then
+if ! ${GO:-go} test -c -o /dev/null -gcflags="-S" . >/dev/null 2>"$log"; then
 	cat "$log" >&2
 	exit 1
 fi
