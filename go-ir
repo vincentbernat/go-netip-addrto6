@@ -1,0 +1,45 @@
+#!/bin/bash
+# Show the compiler IR of the functions of this package, before inlining,
+# before walk and after walk. The package is built as a test binary, so tests
+# and benchmarks are included.
+#
+# Usage:
+#   ./go-ir <function-regexp>
+#   ./go-ir '\.asm'
+
+set -eu
+
+if [ $# -ne 1 ]; then
+	echo "usage: $0 <function-regexp>" >&2
+	exit 1
+fi
+
+log=$(mktemp)
+trap 'rm -f "$log"' EXIT
+
+# -W=2 asks the compiler to dump the IR of each function
+if ! ${GO:-go} test -c -o /dev/null -gcflags="-W=2" . >"$log" 2>&1; then
+	cat "$log" >&2
+	exit 1
+fi
+
+re=$1 me=$0 awk '
+BEGIN { re = ENVIRON["re"] }
+# A dump starts with a header naming the stage and the function
+/^(before|after) (devirtualize-and-inline|walk) / {
+	take = ($NF ~ re)
+	if (take) {
+		found = 1
+		printf "\n%s\n", $0
+	}
+	next
+}
+# Lines of a dump start with a dot
+!/^\./ { take = 0; next }
+take
+END {
+	if (!found) {
+		printf "%s: no function matches %s\n", ENVIRON["me"], re > "/dev/stderr"
+		exit 1
+	}
+}' "$log"
