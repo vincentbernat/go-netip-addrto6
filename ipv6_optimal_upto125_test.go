@@ -9,5 +9,6 @@ package addrto6
 // builtin one.
 const (
 	unsafeIsOptimal  = false
+	safeIsOptimal    = false
 	goVersionChecked = true
 )

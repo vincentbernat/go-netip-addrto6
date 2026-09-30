@@ -5,10 +5,10 @@
 
 package addrto6
 
-// Go 1.28 and later were never checked. A newer compiler may turn AddrTo6Safe
-// into the same code as a builtin To6 and make the unsafe version useless.
-// Let's hope this will be true!
+// From Go 1.28, AddrTo6Safe is as short as a builtin To6, like AddrTo6Unsafe.
+// This was only checked with a patched development version.
 const (
 	unsafeIsOptimal  = true
-	goVersionChecked = false
+	safeIsOptimal    = true
+	goVersionChecked = true
 )

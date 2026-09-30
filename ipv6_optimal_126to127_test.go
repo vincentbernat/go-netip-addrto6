@@ -9,5 +9,6 @@ package addrto6
 // AddrTo6Safe is much longer.
 const (
 	unsafeIsOptimal  = true
+	safeIsOptimal    = false
 	goVersionChecked = true
 )

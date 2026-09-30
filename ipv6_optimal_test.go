@@ -50,8 +50,8 @@ func instructionCount(t *testing.T, fn any) int {
 	return count
 }
 
-// TestAddrTo6Optimal checks AddrTo6Unsafe compiles to as few instructions as a
-// builtin To6 method. This is version-dependent.
+// TestAddrTo6Optimal checks AddrTo6Unsafe and AddrTo6Safe compile to as few
+// instructions as a builtin To6 method. This is version-dependent.
 func TestAddrTo6Optimal(t *testing.T) {
 	if runtime.GOARCH != "amd64" {
 		t.Skipf("no disassembler for %s", runtime.GOARCH)
@@ -72,7 +72,9 @@ func TestAddrTo6Optimal(t *testing.T) {
 		t.Errorf("AddrTo6Unsafe() instruction count: %d, expected less than %d",
 			withUnsafe, withoutUnsafe)
 	}
-	if withoutUnsafe <= builtin {
+	if safeIsOptimal {
+		AssertEqual(t, withoutUnsafe, builtin, "AddrTo6Safe() instruction count")
+	} else if withoutUnsafe <= builtin {
 		t.Errorf("AddrTo6Safe() instruction count: %d, expected more than %d",
 			withoutUnsafe, builtin)
 	}
