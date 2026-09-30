@@ -15,7 +15,8 @@ import (
 )
 
 // instructionCount disassembles the compiled body of fn and counts the
-// instructions. The padding between functions is not counted.
+// instructions. The padding between functions and the NOP instructions are not
+// counted.
 func instructionCount(t *testing.T, fn any) int {
 	t.Helper()
 	pc := reflect.ValueOf(fn).Pointer()
@@ -38,6 +39,11 @@ func instructionCount(t *testing.T, fn any) int {
 			t.Fatalf("x86asm.Decode() error:\n%+v", err)
 		}
 		code = code[inst.Len:]
+		if inst.Op == x86asm.NOP {
+			// The compiler adds NOP instructions to keep track of inlined
+			// calls and of the function start.
+			continue
+		}
 		if inst.Op == x86asm.INT {
 			// Functions are padded with INT3. Only count them if more code
 			// follows.
