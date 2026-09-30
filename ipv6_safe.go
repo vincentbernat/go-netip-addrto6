@@ -9,7 +9,7 @@ import "net/netip"
 // an IPv6 address unmodified. This is the safest but slowest version.
 func AddrTo6Safe(ip netip.Addr) netip.Addr {
 	if ip.Is4() {
-		return netip.AddrFrom16(ip.As16())
+		ip = netip.AddrFrom16(ip.As16())
 	}
 	return ip
 }
